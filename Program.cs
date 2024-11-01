@@ -19,7 +19,7 @@ namespace ØvelseTime2._2
         }
 
 
-        public static void PrintFoodItems()
+        public  static void PrintFoodItems()
         {
             FoodItem[] foodItems = new FoodItem[10];
             foodItems[0] = new FoodItem(1, "Æble", 4, DateTime.Now.AddDays(7));
@@ -67,7 +67,13 @@ namespace ØvelseTime2._2
         }
     }
 
-    public class Inventory : Item
+    public interface IExpireable
+    {
+        bool IsExpired();
+    }
+
+
+    public class Inventory
     {
         Item[] items;
         string[] array = new string[]
@@ -83,9 +89,10 @@ namespace ØvelseTime2._2
         {
             items = new Item[2];
             items[0] = new NonFoodItem(1, "lol", 11.5, array);
-            items[1] = new FoodItem(1,"Æble",4,DateTime.Now.AddDays(1));
+            items[1] = new FoodItem(1,"Æble",4,DateTime.Now.AddDays(-1));
 
             Console.WriteLine(GetInvetoryValue());
+            RemoveExpiredFoods();
             PrintInventory();
         }
 
@@ -143,8 +150,21 @@ namespace ØvelseTime2._2
                 }
             }
         }
+        public void RemoveExpiredFoods()
+        {
+            var count = items.Count(x => x.IsExpired() == false);
+            var newitems = new Item[count];
+            for (int i = 0; i < items.Length; i++)
+            {
+                    if (items[i].IsExpired() == false)
+                    {
+                        newitems[i]= items[i];
+                    }
+            }
+            items= newitems;
+        }
     }
-    public class Item
+    public abstract class Item:IExpireable
     {
         
         public int id { get; set; }
@@ -155,65 +175,79 @@ namespace ØvelseTime2._2
         {
               return name;
         }
-        public double Getprice() 
-        { 
+        public double Getprice()
+        {
             return price;
         }
 
+        public abstract bool IsExpired();
     }
     public class NewFoodItem : Item
     {
-        public DateTime expires { get; set; }
+        public DateTime expiresAt { get; set; }
         public DateTime GetExpires()
         {
-            return expires;
+            return expiresAt;
         }
         public override string ToString()
         {
-            var newString = $"Name:{name}, Price:{price}, expiration date:{expires}";
+            var newString = $"Name:{name}, Price:{price}, expiration date:{expiresAt}";
             return newString;
         }
-    }
-    public class NewNonFoodItem : Item
-    {
-        public string[] materials { get; set; }
-        public override string ToString()
+        public override bool IsExpired()
         {
-            string listOfMaterials = "";
-            for (int i = 0; i < materials.Length; i++)
-            {
-                var newlistOfMaterials = listOfMaterials;
-                string material = materials[i];
-                listOfMaterials = listOfMaterials + ", " + material;
-            }
-            var newString = $"Name:{name}, Price:{price}, Materials{listOfMaterials}";
-            return newString;
+            return false;
         }
     }
+    //public class NewNonFoodItem : Item
+    //{
+    //    public string[] materials { get; set; }
+    //    public override string ToString()
+    //    {
+    //        string listOfMaterials = "";
+    //        for (int i = 0; i < materials.Length; i++)
+    //        {
+    //            var newlistOfMaterials = listOfMaterials;
+    //            string material = materials[i];
+    //            listOfMaterials = listOfMaterials + ", " + material;
+    //        }
+    //        var newString = $"Name:{name}, Price:{price}, Materials{listOfMaterials}";
+    //        return newString;
+    //    }
+    //}
 
 
-        public class FoodItem:Item
+    public class FoodItem:Item
     {
-        public DateTime expires { get; set; }
+        public DateTime expiresAt { get; set; }
 
-        public FoodItem(int x_id,string x_name,double x_price,DateTime x_expires)
+        public FoodItem(int x_id,string x_name,double x_price,DateTime x_expiresAt)
         {
             id = x_id;
             name = x_name;
             price = x_price;    
-            expires = x_expires;
+            expiresAt = x_expiresAt;
         }
 
 
         public DateTime GetExpires()
         {
-            return expires;
+            return expiresAt;
         }
         public override string ToString()
         {
-            var newString = $"Name:{name}, Price:{price}, expiration date:{expires}";
+            var newString = $"Name:{name}, Price:{price}, expiration date:{expiresAt}";
             return newString;
         }
+        public override bool IsExpired()
+        {
+            if (expiresAt < DateTime.UtcNow)
+            {
+                return true;
+            }
+            return false;
+        }
+
     }
     public class NonFoodItem : Item
     {
@@ -241,6 +275,10 @@ namespace ØvelseTime2._2
             }
             var newString = $"Name:{name}, Price:{price}, Materials{listOfMaterials}";
             return newString;
+        }
+        public override bool IsExpired()
+        {
+            return false;
         }
     }
 }
